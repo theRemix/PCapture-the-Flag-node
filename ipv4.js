@@ -1,5 +1,7 @@
 // http://www.tcpipguide.com/free/t_IPDatagramGeneralFormat.htm
 
+const { parseTCPPacket } = require('./tcp')
+
 const bitSet = (data, check) => (data & check) === check
 
 const FLAGS = {
@@ -45,7 +47,7 @@ const parseIPv4Packet = data => {
   const optionsLength = internetHeaderLength - 5
   const optionBytes = optionsLength ?
     data.readUInt32BE(offset+=(4*optionsLength)).toString(2) : 0 // with padding
-  const payload = data.slice(offset).toString('hex')
+  const payload = parseTCPPacket(data.slice(offset))
 
   return {
     version,
@@ -58,7 +60,7 @@ const parseIPv4Packet = data => {
     ttl,
     protocol,
     optionBytes,
-    payload
+    data: payload
   }
 }
 

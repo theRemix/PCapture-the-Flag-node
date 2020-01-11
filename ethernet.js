@@ -32,8 +32,13 @@ const parseEthernetFrame = data => {
   const destMACAddr = data.slice(offset, offset+=6).toString('hex')
   const srcMACAddr = data.slice(offset, offset+=6).toString('hex')
   const { type, length } = parseTypeLength(data.slice(offset, offset+=2))
-  const userData = data.slice(offset, data.length-32)
-  const fcs = data.readUInt32BE(data.length-32)
+
+  // not sure how fcs works yet
+  // const userData = data.slice(offset, data.length-32)
+  // const fcs = data.readUInt32BE(data.length-32)
+
+  const userData = data.slice(offset)
+  const fcs = 0
 
   return {
     destMACAddr,
