@@ -1,5 +1,7 @@
 // https://wiki.wireshark.org/Ethernet
 
+const { parseIPv4Packet } = require('./ipv4')
+
 const TYPE = {
   'default': '(IEEE 802.3 and/or 802.2)', // length field
   '0800': 'IP(v4)',
@@ -38,7 +40,7 @@ const parseEthernetFrame = data => {
     srcMACAddr,
     type,
     length,
-    userData: userData.toString('hex'), // @TODO parse in ipv4.js
+    userData: parseIPv4Packet(userData),
     fcs
   }
 }
