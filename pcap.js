@@ -33,18 +33,19 @@ const parseGlobalHeader = pcap => {
 }
 
 const parsePcapPacket = (pcap, offset) => {
+  if (offset >= pcap.length) return null
   const timeStampInSeconds = pcap.readUInt32LE(offset)
   const timeStampInMicroseconds = pcap.readUInt32LE(offset+4)
-  const packetLength = pcap.readUInt32LE(offset+8)
-  const originalPacketLength = pcap.readUInt32LE(offset+12)
-  const packetData = pcap.slice(offset+16, offset+16+packetLength)
-  const ethernetFrame = parseEthernetFrame(packetData)
+  const length = pcap.readUInt32LE(offset+8)
+  const originalLength = pcap.readUInt32LE(offset+12)
+  const data = pcap.slice(offset+16, offset+16+length)
+  const ethernetFrame = parseEthernetFrame(data)
 
   return {
     timeStampInSeconds,
     timeStampInMicroseconds,
-    packetLength,
-    originalPacketLength,
+    length,
+    originalLength,
     ethernetFrame
   }
 }
