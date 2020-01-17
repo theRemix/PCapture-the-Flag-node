@@ -73,6 +73,7 @@ const getNextPacket = (packets, offset) => {
 }
 
 const packets = getNextPacket([], firstPacketOffset)
+const reconstructedPayload = packets
   .filter(isServer)
   .filter(isACK)
   .sort(orderBySeq)
@@ -100,9 +101,11 @@ const packets = getNextPacket([], firstPacketOffset)
 
 const parsedPcapFile = {
   globalPcapHeader,
-  packets: packets.slice(packets.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length)
+  packets,
+  // packets: packets.slice(packets.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
+  reconstructedPayload,
 }
 
-console.log(JSON.stringify(parsedPcapFile, null, 2))
+console.log(JSON.stringify(parsedPcapFile.packets, null, 2))
 
-writeFileSync('out.jpg', parsedPcapFile.packets)
+writeFileSync('out.jpg', parsedPcapFile.reconstructedPayload)
