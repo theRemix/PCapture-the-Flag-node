@@ -102,10 +102,8 @@ const reconstructedPayload = packets
 const parsedPcapFile = {
   globalPcapHeader,
   packets,
-  // packets: packets.slice(packets.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
+  packets: packets.slice(packets.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
   reconstructedPayload,
 }
-
-console.log(JSON.stringify(parsedPcapFile.packets, null, 2))
 
 writeFileSync('out.jpg', parsedPcapFile.reconstructedPayload)

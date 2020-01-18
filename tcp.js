@@ -49,8 +49,8 @@ const parseTCPPacket = (data, pseudoHeader) => {
     flags,
     window,
     checksum,
-    urgentPointer,
     checksumVerified,
+    urgentPointer,
     data: payload,
   }
 }

@@ -53,20 +53,20 @@ const createPseudoHeader = (
 
 const parseIPv4Packet = data => {
   let offset = 0
-  const byte0 = data.readUInt8(offset++)
+  const byte0 = data.readUInt8(offset)
   const version = byte0 >> 4
   const internetHeaderLength = byte0 & 0xF
-  const tos = data.readUInt8(offset++)
-  const totalLength = data.readUInt16BE(offset+=2)
+  const tos = data.readUInt8(offset+=1)
+  const totalLength = data.readUInt16BE(offset+=1)
   const identification = data.readUInt16BE(offset+=2)
   const flagsFragmentOffsetBytes = data.readUInt16BE(offset+=2)
   const flags = parseIPV4Flags(flagsFragmentOffsetBytes >> 3)
   const fragmentOffset = flagsFragmentOffsetBytes & 0x1F
-  const ttl = data.readUInt8(offset++)
-  const protocolHeader = data.readUInt8(offset++)
+  const ttl = data.readUInt8(offset+=2)
+  const protocolHeader = data.readUInt8(offset+=1)
   const protocol = PROTOCOL[protocolHeader]
-  const headerChecksum = data.readUInt16BE(offset+=2)
-  const sourceAddress = data.readUInt32BE(offset+=4)
+  const headerChecksum = data.readUInt16BE(offset+=1)
+  const sourceAddress = data.readUInt32BE(offset+=2)
   const destinationAddress = data.readUInt32BE(offset+=4)
   const optionsLength = internetHeaderLength - 5
   const optionBytes = optionsLength ?
@@ -74,6 +74,10 @@ const parseIPv4Packet = data => {
 
   // for upper layer's checksum
   const pseudoHeader = createPseudoHeader(sourceAddress, destinationAddress, protocolHeader, data.length - offset)
+  const checksumVerified = verifyChecksum(
+    data.slice(0,20),
+    headerChecksum
+  )
 
   const payload = parseTCPPacket(data.slice(offset), pseudoHeader)
 
@@ -88,6 +92,7 @@ const parseIPv4Packet = data => {
     ttl,
     protocol,
     headerChecksum,
+    checksumVerified,
     sourceAddress,
     destinationAddress,
     optionBytes,
@@ -95,6 +100,30 @@ const parseIPv4Packet = data => {
   }
 }
 
+/*
+ * - ipv4headers
+ *   - checksum field (6th set) needs to be zeroed out during calculation
+ * - verification:
+ *   - split tcpPacket into 16bit sets
+ *   - add each 16bit set together
+ *   - if the sum is greater than 0xffff, remove largest bit and increment by 1
+ *   - add ipv4Checksum (one's complement of previous sets)
+ *   - return true if answer is 0xffff
+ */
+const verifyChecksum = (ipv4headers, ipv4Checksum) =>
+  (new Array(Math.ceil(ipv4headers.length / 2))
+    .fill(null)
+    .map((_, i) => i == 5 ? 0 : // skip checksum field
+      ipv4headers.readUInt16BE(i*2)
+    )
+    .reduce((checksum, sub, i) => {
+      let sum = checksum + sub
+      return sum > 0xffff ?
+        (sum & 0xffff) + 1 : // 'carry' the one
+        sum
+    }) ^ 0xffff) === ipv4Checksum
+
 module.exports = {
-  parseIPv4Packet
+  parseIPv4Packet,
+  verifyChecksum
 }
