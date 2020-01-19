@@ -21,7 +21,6 @@ const parseTCPPacket = (data, pseudoHeader) => {
   const seq = data.readUInt32BE(offset+=2)
   const ack = data.readUInt32BE(offset+=4)
   const offsetResFlagBits = data.readUInt16BE(offset+=4)
-  offset += 2
   const dataOffset = (offsetResFlagBits >> 12) // Header Length
   const headerLength = dataOffset * 4
   const flags = parseTCPFlags(offsetResFlagBits & 0x3f)

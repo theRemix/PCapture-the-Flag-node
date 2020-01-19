@@ -69,8 +69,12 @@ const parseIPv4Packet = data => {
   const sourceAddress = data.readUInt32BE(offset+=2)
   const destinationAddress = data.readUInt32BE(offset+=4)
   const optionsLength = internetHeaderLength - 5
-  const optionBytes = optionsLength ?
-    data.readUInt32BE(offset+=(4*optionsLength)).toString(2) : 0 // with padding
+  let optionBytes = 0
+    if(optionsLength){
+      optionBytes = data.readUInt32BE(offset+=(4*optionsLength)).toString(2) // with padding
+    }else{
+      offset+=4 // with padding
+    }
 
   // for upper layer's checksum
   const pseudoHeader = createPseudoHeader(sourceAddress, destinationAddress, protocolHeader, data.length - offset)
