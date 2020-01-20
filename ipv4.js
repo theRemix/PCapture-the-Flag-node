@@ -118,9 +118,9 @@ const verifyChecksum = (ipv4headers, ipv4Checksum) =>
   (new Array(Math.ceil(ipv4headers.length / 2))
     .fill(null)
     .map((_, i) => i == 5 ? 0 : // skip checksum field
-      ipv4headers.readUInt16BE(i*2)
+      ipv4headers.readUInt16BE(i*2, (i*2)+16)
     )
-    .reduce((checksum, sub, i) => {
+    .reduce((checksum, sub) => {
       let sum = checksum + sub
       return sum > 0xffff ?
         (sum & 0xffff) + 1 : // 'carry' the one

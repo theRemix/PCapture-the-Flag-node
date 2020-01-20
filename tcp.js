@@ -29,7 +29,8 @@ const parseTCPPacket = (data, pseudoHeader) => {
   const urgentPointer = data.readUInt16BE(offset+=2)
 
   const checksumVerified = verifyChecksum(
-    Buffer.concat([pseudoHeader, data], pseudoHeader.length + data.length),
+    pseudoHeader,
+    data,
     checksum
   )
 
@@ -55,23 +56,36 @@ const parseTCPPacket = (data, pseudoHeader) => {
 }
 
 /*
- * - tcpPacket:
+ * - pseudoHeader:
  *   - 12 byte pseudo header from IP headers
- *   - the rest of the tcp packet bytes
- *   - checksum field is assumed to be all 0s during calculation
+ * - tcpPacket:
+ *   - the rest of the tcp header and data bytes
+ *   - checksum field will be skipped during calculation
  * - verification:
  *   - split tcpPacket into 16bit sets
  *   - add each 16bit set together
  *   - add tcpChecksum (one's complement of previous sets)
  *   - return true if answer is 0xffff
  */
-const verifyChecksum = (tcpPacket, tcpChecksum) =>
-  (new Array(Math.ceil(tcpPacket.length / 2))
+const verifyChecksum = (pseudoHeader, tcpPacket, tcpChecksum) => {
+  const checksumOffset = 16
+  const data = Buffer.concat([
+    pseudoHeader,
+    tcpPacket.slice(0, checksumOffset),
+    tcpPacket.slice(checksumOffset+2), // skip checksum, assume zeros
+  ])
+
+  return (new Array(Math.ceil(data.length / 2))
     .fill(null)
-    .map((_, i) => tcpPacket.readUInt16BE(i*2))
-    .reduce((checksum, sub) => checksum + sub)
-    ^ 0xffff) === tcpChecksum
+    .map((_, i) => data.readUInt16BE(i*2))
+    .reduce((checksum, sub) => {
+      let sum = checksum + sub
+      return sum > 0xffff ?
+        (sum & 0xffff) + 1 : // 'carry' the one
+        sum
+    }) ^ 0xffff) === tcpChecksum
     // or: add tcpChecksum should equal 0xffff
+}
 
 module.exports = {
   parseTCPPacket,
