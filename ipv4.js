@@ -25,8 +25,8 @@ const PROTOCOL = {
 
 // [ flag1, flag2 ]
 const parseIPV4Flags = data => Object.keys(FLAGS)
-  .filter(FLAGS.hasOwnProperty.bind(FLAGS))
-  .map(flag => bitSet(data, FLAGS[flag]))
+  .filter(flag => bitSet(data, flag))
+  .map(flag => FLAGS[flag])
 
 /*
  * for upper layer checksum

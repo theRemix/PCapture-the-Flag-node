@@ -65,6 +65,24 @@ const orderBySeq = (tcpA, tcpB) =>
   tcpA.ethernetFrame.userData.data.seq -
   tcpB.ethernetFrame.userData.data.seq
 
+const ipv4ChecksumVerified = ({
+  ethernetFrame: {
+    userData: {
+      checksumVerified
+    }
+  }
+}) => checksumVerified
+
+const tcpChecksumVerified = ({
+  ethernetFrame: {
+    userData: {
+      data: {
+        checksumVerified
+      }
+    }
+  }
+}) => checksumVerified
+
 const getNextPacket = (packets, offset) => {
   let packet = parsePcapPacket(pcapData, offset)
   if (packet == null) return packets
@@ -77,6 +95,8 @@ const reconstructedPayload = packets
   .filter(isServer)
   .filter(isACK)
   .sort(orderBySeq)
+  .filter(ipv4ChecksumVerified)
+  .filter(tcpChecksumVerified)
   .reduce(({uniquePackets, seqs}, {
     ethernetFrame: {
       userData: {
@@ -98,12 +118,11 @@ const reconstructedPayload = packets
     Buffer.concat([httpResponse, data.data])
   , Buffer.from([]))
 
-
 const parsedPcapFile = {
   globalPcapHeader,
   packets,
-  packets: packets.slice(packets.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
-  reconstructedPayload,
+  reconstructedPayload: reconstructedPayload
+    .slice(reconstructedPayload.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
 }
 
 writeFileSync('out.jpg', parsedPcapFile.reconstructedPayload)
