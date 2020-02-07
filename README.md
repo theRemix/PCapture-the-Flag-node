@@ -6,21 +6,31 @@
 
 ## Quick Start
 
+parses pcap file, headers and body of each layer, reconstructs the original http payload into `out.jpg`
+
 ```sh
-node .
+npm start
+```
+
+## Checksum Tests
+
+test checksum verification methods
+
+```sh
+npm test
 ```
 
 ## Parsing Packet Capture File
 
 - read pcap file
 - parse global header
-- parse each captured packet
-  - parse Link Layer : ethernet.js
-  - parse Network Layer : ipv4.js
-  - parse Transport : tcp.js
-  - parse Application Layer : http.js
+- parse each captured packet : [pcap.js](./pcap.js)
+  - parse Link Layer : [ethernet.js](./ethernet.js)
+  - parse Network Layer : [ipv4.js](./ipv4.js)
+  - parse Transport : [tcp.js](./tcp.js)
+  - parse Application Layer : [http.js](./http.js)
 - reconstruct response (app layer receive from server)
-  - @TODO, filtering, sorting, error correction
+- write to `out.jpg`
 
 ```
 parsedPcapFile:
