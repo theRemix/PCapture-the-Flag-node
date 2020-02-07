@@ -8,8 +8,7 @@
     - parse Network Layer : ipv4.js
     - parse Transport : tcp.js
     - parse Application Layer : http.js
-  - reconstruct response (app layer receive from server)
-    - @TODO, filtering, sorting, error correction
+  - reconstruct response (app layer received from server)
 
   parsedPcapFile:
   {
@@ -91,38 +90,48 @@ const getNextPacket = (packets, offset) => {
 }
 
 const packets = getNextPacket([], firstPacketOffset)
-const reconstructedPayload = packets
+const reconstructedPackets = packets
   .filter(isServer)
   .filter(isACK)
   .sort(orderBySeq)
   .filter(ipv4ChecksumVerified)
   .filter(tcpChecksumVerified)
-  .reduce(({uniquePackets, seqs}, {
-    ethernetFrame: {
-      userData: {
-        data
-      }
+  .reduce(({uniquePackets, seqs}, packet) => {
+    if(seqs.has(packet.ethernetFrame.userData.data.seq)) {
+      return { uniquePackets, seqs } // drop duplicate
     }
-  }) => {
-    if(seqs.has(data.seq)) return { uniquePackets, seqs }
 
-    seqs.add(data.seq)
+    seqs.add(packet.ethernetFrame.userData.data.seq)
     return {
-      uniquePackets: [...uniquePackets, data],
+      uniquePackets: [...uniquePackets, packet],
       seqs
     }
   }
   , { uniquePackets: [], seqs: new Set() })
   .uniquePackets
+
+let reconstructedPayload = reconstructedPackets
+  .map(({
+    ethernetFrame: {
+      userData: {
+        data: {
+          data
+        }
+      }
+    }
+  }) => data)
   .reduce((httpResponse, data) =>
-    Buffer.concat([httpResponse, data.data])
+    Buffer.concat([httpResponse, data])
   , Buffer.from([]))
+reconstructedPayload = reconstructedPayload.slice(
+  reconstructedPayload.indexOf(httpBodyDelimiter) + httpBodyDelimiter.length
+)
 
 const parsedPcapFile = {
   globalPcapHeader,
   packets,
-  reconstructedPayload: reconstructedPayload
-    .slice(reconstructedPayload.indexOf(httpBodyDelimiter)+httpBodyDelimiter.length),
+  reconstructedPackets,
+  reconstructedPayload,
 }
 
 writeFileSync('out.jpg', parsedPcapFile.reconstructedPayload)

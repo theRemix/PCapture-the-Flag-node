@@ -1,4 +1,3 @@
-
 const TCPFlags = {
   0b100000: 'URG',
   0b010000: 'ACK',
@@ -37,7 +36,7 @@ const parseTCPPacket = (data, pseudoHeader) => {
   let payload = null
   if(data.length > headerLength){
     // @TODO parse options
-    payload = data.slice(offset+2)
+    payload = data.slice(headerLength)
   }
 
   return {
@@ -51,6 +50,7 @@ const parseTCPPacket = (data, pseudoHeader) => {
     checksum,
     checksumVerified,
     urgentPointer,
+    length: data.length,
     data: payload,
   }
 }
