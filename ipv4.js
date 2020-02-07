@@ -83,7 +83,7 @@ const parseIPv4Packet = data => {
     headerChecksum
   )
 
-  const payload = parseTCPPacket(data.slice(offset), pseudoHeader)
+  const tcp = parseTCPPacket(data.slice(offset), pseudoHeader)
 
   return {
     version,
@@ -100,7 +100,7 @@ const parseIPv4Packet = data => {
     sourceAddress,
     destinationAddress,
     optionBytes,
-    data: payload
+    tcp
   }
 }
 

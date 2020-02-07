@@ -28,24 +28,23 @@ npm test
   - parse Link Layer : [ethernet.js](./ethernet.js)
   - parse Network Layer : [ipv4.js](./ipv4.js)
   - parse Transport : [tcp.js](./tcp.js)
-  - parse Application Layer : [http.js](./http.js)
-- reconstruct response (app layer receive from server)
-- write to `out.jpg`
+      - parse Application Layer payload
+  - reconstruct response (app layer receive from server)
+- write reconstructed packet data to `out.jpg`
 
 ```
-parsedPcapFile:
+parsedPcap packets:
 {
-  ...global pcap headers,
-  packets: [
-    {
-      ...ethernet headers,
-      ethernetFrame: {
-        userData: {
+  ethernet: {
+    ...ethernet headers,
+    ipv4: {
+      ...ipv4 headers,
+        tcp: {
           ...tcp headers,
-          payload: Application Layer Data (HTTP)
+          app: Application Layer Data (HTTP)
         }
       }
     }
-  ]
+  }
 }
 ```

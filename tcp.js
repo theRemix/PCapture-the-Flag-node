@@ -33,10 +33,10 @@ const parseTCPPacket = (data, pseudoHeader) => {
     checksum
   )
 
-  let payload = null
+  let app = null
   if(data.length > headerLength){
     // @TODO parse options
-    payload = data.slice(headerLength)
+    app = data.slice(headerLength)
   }
 
   return {
@@ -51,7 +51,7 @@ const parseTCPPacket = (data, pseudoHeader) => {
     checksumVerified,
     urgentPointer,
     length: data.length,
-    data: payload,
+    app,
   }
 }
 

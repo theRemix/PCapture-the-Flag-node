@@ -39,14 +39,14 @@ const parsePcapPacket = (pcap, offset) => {
   const length = pcap.readUInt32LE(offset+8)
   const originalLength = pcap.readUInt32LE(offset+12)
   const data = pcap.slice(offset+16, offset+16+length)
-  const ethernetFrame = parseEthernetFrame(data)
+  const ethernet = parseEthernetFrame(data)
 
   return {
     timeStampInSeconds,
     timeStampInMicroseconds,
     length,
     originalLength,
-    ethernetFrame
+    ethernet
   }
 }
 

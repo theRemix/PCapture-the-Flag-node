@@ -38,6 +38,7 @@ const parseEthernetFrame = data => {
   // const fcs = data.readUInt32BE(data.length-32)
 
   const userData = data.slice(offset)
+  const ipv4 = parseIPv4Packet(userData)
   const fcs = 0
 
   return {
@@ -45,7 +46,7 @@ const parseEthernetFrame = data => {
     srcMACAddr,
     type,
     length,
-    userData: parseIPv4Packet(userData),
+    ipv4,
     fcs
   }
 }

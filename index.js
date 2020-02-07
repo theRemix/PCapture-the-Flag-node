@@ -7,23 +7,22 @@
     - parse Link Layer : ethernet.js
     - parse Network Layer : ipv4.js
     - parse Transport : tcp.js
-    - parse Application Layer : http.js
+      - parse Application Layer payload
   - reconstruct response (app layer received from server)
 
-  parsedPcapFile:
+  parsedPcap packets:
   {
-    ...global pcap headers,
-    packets: [
-      {
-        ...ethernet headers,
-        ethernetFrame: {
-          userData: {
+    ethernet: {
+      ...ethernet headers,
+      ipv4: {
+        ...ipv4 headers,
+          tcp: {
             ...tcp headers,
-            payload: Application Layer Data (HTTP)
+            app: Application Layer Data (HTTP)
           }
         }
       }
-    ]
+    }
   }
 */
 const { readFileSync, writeFileSync } = require('fs')
@@ -41,9 +40,9 @@ const pcapRecordHeaderSize = 16
 const httpBodyDelimiter = Buffer.from('\r\n\r\n')
 
 const isServer = ({
-  ethernetFrame: {
-    userData: {
-      data: {
+  ethernet: {
+    ipv4: {
+      tcp: {
         sourcePort
       }
     }
@@ -51,9 +50,9 @@ const isServer = ({
 }) => sourcePort === 80
 
 const isACK = ({
-  ethernetFrame: {
-    userData: {
-      data: {
+  ethernet: {
+    ipv4: {
+      tcp: {
         flags
       }
     }
@@ -61,21 +60,21 @@ const isACK = ({
 }) => flags.includes('ACK') && !flags.includes('SYN')
 
 const orderBySeq = (tcpA, tcpB) =>
-  tcpA.ethernetFrame.userData.data.seq -
-  tcpB.ethernetFrame.userData.data.seq
+  tcpA.ethernet.ipv4.tcp.seq -
+  tcpB.ethernet.ipv4.tcp.seq
 
 const ipv4ChecksumVerified = ({
-  ethernetFrame: {
-    userData: {
+  ethernet: {
+    ipv4: {
       checksumVerified
     }
   }
 }) => checksumVerified
 
 const tcpChecksumVerified = ({
-  ethernetFrame: {
-    userData: {
-      data: {
+  ethernet: {
+    ipv4: {
+      tcp: {
         checksumVerified
       }
     }
@@ -97,11 +96,11 @@ const reconstructedPackets = packets
   .filter(ipv4ChecksumVerified)
   .filter(tcpChecksumVerified)
   .reduce(({uniquePackets, seqs}, packet) => {
-    if(seqs.has(packet.ethernetFrame.userData.data.seq)) {
+    if(seqs.has(packet.ethernet.ipv4.tcp.seq)) {
       return { uniquePackets, seqs } // drop duplicate
     }
 
-    seqs.add(packet.ethernetFrame.userData.data.seq)
+    seqs.add(packet.ethernet.ipv4.tcp.seq)
     return {
       uniquePackets: [...uniquePackets, packet],
       seqs
@@ -112,14 +111,14 @@ const reconstructedPackets = packets
 
 let reconstructedPayload = reconstructedPackets
   .map(({
-    ethernetFrame: {
-      userData: {
-        data: {
-          data
+    ethernet: {
+      ipv4: {
+        tcp: {
+          app
         }
       }
     }
-  }) => data)
+  }) => app)
   .reduce((httpResponse, data) =>
     Buffer.concat([httpResponse, data])
   , Buffer.from([]))
